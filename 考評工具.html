@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>內場夥伴考評系統</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#F5F5F3;color:#1a1a1a;padding-bottom:60px;}
+.header{background:#fff;border-bottom:0.5px solid #E0DED8;padding:14px 20px;position:sticky;top:0;z-index:20;}
+.header h1{font-size:17px;font-weight:600;}
+.header p{font-size:12px;color:#888;margin-top:2px;}
+.tab-bar{display:flex;gap:0;border-bottom:0.5px solid #E0DED8;background:#fff;position:sticky;top:53px;z-index:19;}
+.tab{flex:1;padding:10px 4px;text-align:center;font-size:13px;color:#888;cursor:pointer;border-bottom:2px solid transparent;}
+.tab.active{color:#1a1a1a;font-weight:500;border-bottom:2px solid #1a1a1a;}
+.view{display:none;padding:14px;}
+.view.active{display:block;}
+.meta-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.field label{font-size:12px;color:#666;display:block;margin-bottom:4px;}
+.field input,.field select{width:100%;padding:9px 11px;border-radius:8px;border:0.5px solid #D8D6D0;font-size:14px;background:#fff;}
+.field input:focus,.field select:focus{outline:none;border-color:#1a1a1a;}
+/* person grid */
+.pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px;}
+.pcard{background:#fff;border:0.5px solid #E8E6E0;border-radius:12px;padding:11px 13px;cursor:pointer;position:relative;}
+.pcard.active{border-color:#1a1a1a;background:#F8F7F5;}
+.pc-dot{width:7px;height:7px;border-radius:50%;background:#34C759;position:absolute;top:10px;right:10px;}
+.pc-name{font-size:13px;font-weight:500;}
+.pc-sub{font-size:11px;color:#888;margin-top:2px;}
+.pc-score{font-size:16px;font-weight:600;margin-top:6px;}
+.gb{display:inline-block;font-size:10px;font-weight:600;padding:1px 6px;border-radius:20px;margin-left:3px;vertical-align:middle;}
+.gS{background:#FFF3CD;color:#7A5800;}
+.gA{background:#EAF3DE;color:#3B6D11;}
+.gB{background:#E6F1FB;color:#185FA5;}
+.gC{background:#F1EFE8;color:#5F5E5A;}
+/* panel */
+.panel{background:#fff;border:0.5px solid #E8E6E0;border-radius:12px;padding:16px;margin-bottom:12px;}
+.panel-name{font-size:16px;font-weight:600;}
+.panel-sub{font-size:12px;color:#888;margin-top:3px;}
+.role-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0;padding-bottom:12px;border-bottom:0.5px solid #F0EEE8;}
+.rtab{padding:5px 11px;border-radius:20px;border:0.5px solid #E0DED8;font-size:12px;cursor:pointer;background:#fff;color:#888;position:relative;}
+.rtab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.rtab.has-self::after{content:'';width:5px;height:5px;border-radius:50%;background:#34C759;position:absolute;top:2px;right:2px;}
+.rtab.not-learned{opacity:0.4;}
+.reviewer-hint{font-size:11px;color:#aaa;margin-bottom:12px;}
+.not-learned-box{background:#F8F7F5;border:0.5px dashed #D8D6D0;border-radius:8px;padding:12px;text-align:center;font-size:13px;color:#888;margin-bottom:12px;}
+.sec-block{margin-bottom:14px;padding-bottom:14px;border-bottom:0.5px solid #F5F3EF;}
+.sec-block:last-of-type{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.sec-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.sec-title{font-size:13px;font-weight:500;}
+.sec-w{font-size:11px;color:#aaa;background:#F5F3EF;padding:1px 7px;border-radius:20px;}
+.sbadge{font-size:10px;padding:1px 6px;border-radius:20px;margin-left:4px;}
+.sbadge-self{background:#EAF3DE;color:#3B6D11;}
+.sbadge-zero{background:#F1EFE8;color:#888;}
+.criteria{font-size:11px;color:#bbb;background:#F8F7F5;padding:7px 9px;border-radius:7px;line-height:1.7;margin-bottom:8px;}
+.score-row{display:grid;grid-template-columns:1fr 1fr 1fr 1fr 64px 38px;gap:6px;align-items:center;}
+.score-row.hdr{font-size:10px;color:#aaa;margin-bottom:4px;}
+.score-row.hdr span{text-align:center;}
+.si{width:100%;padding:7px 4px;text-align:center;font-size:14px;font-weight:500;border-radius:7px;border:0.5px solid #E0DED8;background:#FAFAF8;}
+.si:focus{outline:none;border-color:#1a1a1a;}
+.si.self-in{border-color:#9FE1CB;background:#F0FBF5;}
+.si.zero{border-color:#E8E6E0;background:#F8F7F5;color:#C8C5BE;}
+.avg-d{font-size:13px;font-weight:600;text-align:center;}
+.grade-d{text-align:center;}
+.tarea{width:100%;padding:9px 11px;border-radius:8px;border:0.5px solid #E0DED8;font-size:13px;font-family:inherit;background:#fff;resize:vertical;min-height:52px;line-height:1.5;}
+.tarea:focus{outline:none;border-color:#1a1a1a;}
+/* buttons */
+.action-bar{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap;}
+.btn{padding:8px 14px;border-radius:8px;border:0.5px solid #D8D6D0;font-size:13px;cursor:pointer;background:#fff;color:#1a1a1a;}
+.btn:active{opacity:0.7;}
+.btn-p{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.btn-b{background:#E6F1FB;color:#185FA5;border-color:#B5D4F4;}
+.btn-g{background:#EAF3DE;color:#3B6D11;border-color:#9FE1CB;}
+/* notice */
+.notice{font-size:12px;color:#666;background:#F8F7F5;padding:9px 12px;border-radius:8px;margin-bottom:12px;line-height:1.6;}
+/* summary */
+.sum-wrap{overflow-x:auto;}
+.sum-tbl{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;}
+.sum-tbl th{font-size:11px;font-weight:500;color:#888;padding:7px 8px;border-bottom:0.5px solid #E8E6E0;text-align:center;}
+.sum-tbl th.left{text-align:left;}
+.sum-tbl td{padding:8px 8px;border-bottom:0.5px solid #F0EEE8;text-align:center;vertical-align:middle;}
+.sum-tbl td.left{text-align:left;font-weight:500;}
+.sum-tbl tr:last-child td{border-bottom:none;}
+.score-cell{display:flex;flex-direction:column;align-items:center;gap:2px;}
+/* modal */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;justify-content:center;z-index:100;}
+.modal{background:#fff;border-radius:16px 16px 0 0;padding:20px;width:100%;max-width:500px;}
+.modal h3{font-size:16px;font-weight:600;margin-bottom:6px;}
+.modal p{font-size:13px;color:#666;margin-bottom:12px;line-height:1.6;}
+.code-box{width:100%;padding:11px;border-radius:8px;border:0.5px solid #E0DED8;font-size:11px;font-family:monospace;background:#F5F5F3;min-height:72px;word-break:break-all;resize:none;}
+.save-toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:9px 18px;border-radius:20px;font-size:13px;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none;}
+.save-toast.show{opacity:1;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>內場夥伴考評系統</h1>
+  <p id="hdr-sub">協作×40% · 效能×30% · 品質×30%</p>
+</div>
+
+<div class="tab-bar">
+  <div class="tab active" onclick="switchTab('eval')">個人評分</div>
+  <div class="tab" onclick="switchTab('summary')">總覽報表</div>
+</div>
+
+<!-- 個人評分 -->
+<div class="view active" id="view-eval">
+  <div class="meta-row">
+    <div class="field"><label>考核月份</label><input type="month" id="eval-month" onchange="saveMeta()"/></div>
+    <div class="field"><label>考核人</label><input type="text" id="reviewer-name" placeholder="輸入姓名" onchange="saveMeta()"/></div>
+  </div>
+  <div class="pgrid" id="pgrid"></div>
+  <div id="eval-panel"></div>
+  <div class="action-bar">
+    <button class="btn" onclick="if(confirm('確定清除全部資料？'))resetAll()">重置</button>
+    <button class="btn btn-b" onclick="openImport()">匯入自評碼</button>
+    <button class="btn btn-p" onclick="exportCSV()">匯出 CSV</button>
+  </div>
+</div>
+
+<!-- 總覽 -->
+<div class="view" id="view-summary">
+  <div class="notice">各崗位加權分（協作×40%＋效能×30%＋品質×30%）· — = 未學習 · · = 未填分<br>
+    評級：<span class="gb gS">S</span>&gt;8.999　<span class="gb gA">A</span>&gt;7.999　<span class="gb gB">B</span>&gt;5.999　<span class="gb gC">C</span>其餘
+  </div>
+  <div class="sum-wrap">
+    <div class="panel">
+      <table class="sum-tbl" id="sum-tbl"></table>
+    </div>
+  </div>
+  <div class="action-bar">
+    <button class="btn btn-p" onclick="exportCSV()">匯出 CSV</button>
+  </div>
+</div>
+
+<!-- 匯入 modal -->
+<div id="modal-import" style="display:none;">
+  <div class="modal-bg" onclick="closeImport()">
+    <div class="modal" onclick="event.stopPropagation()">
+      <h3>匯入夥伴自評碼</h3>
+      <p>將夥伴 LINE 傳來的自評碼貼入下方，點「匯入」自動帶入分數。</p>
+      <textarea class="code-box" id="import-input" placeholder="貼上自評碼…"></textarea>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
+        <button class="btn" onclick="closeImport()">取消</button>
+        <button class="btn btn-p" onclick="doImport()">匯入</button>
+      </div>
+      <div id="import-msg" style="font-size:12px;margin-top:8px;"></div>
+    </div>
+  </div>
+</div>
+
+<div class="save-toast" id="save-toast">已自動儲存</div>
+
+<script>
+var MEMBERS=[
+  {id:'wdm',name:'王大銘',title:'店長'},
+  {id:'zh', name:'鄭洪',  title:'主廚'},
+  {id:'cpw',name:'陳佩玟',title:'副廚'},
+  {id:'xzh',name:'謝忠翰',title:'組長'},
+  {id:'gjx',name:'郭嘉翔',title:'組長'},
+  {id:'lyx',name:'李雨璇',title:'值班'},
+  {id:'lce',name:'李承恩',title:'值班'},
+  {id:'zwt',name:'朱尉廷',title:'值班'},
+  {id:'xyx',name:'謝宇璇',title:'值班'},
+  {id:'wwc',name:'溫偉成',title:'工讀'},
+  {id:'gzm',name:'郭兆銘',title:'工讀'},
+  {id:'qjy',name:'邱畯育',title:'工讀'},
+  {id:'yxy',name:'楊憲宇',title:'工讀'},
+  {id:'gwy',name:'郭維育',title:'工讀'},
+];
+var ROLES=['主爐','副爐','肉台','烤炸','擺控','甜點','備料','開早','收班'];
+var RR={'主爐':'王大銘、郭嘉翔、謝忠翰','副爐':'朱尉廷、郭嘉翔、謝忠翰','肉台':'王大銘、郭嘉翔、陳佩玟','烤炸':'王大銘、郭嘉翔、陳佩玟','擺控':'鄭洪、李雨璇、溫偉成','甜點':'李雨璇、謝宇璇、溫偉成','備料':'鄭洪、李雨璇、陳佩玟','開早':'鄭洪、郭嘉翔、陳佩玟','收班':'鄭洪、郭嘉翔、陳佩玟'};
+var SECS=[
+  {id:'collab',    name:'協作與溝通',       w:0.4,label:'40%',hint:'10=全力協作｜8-9=良好溝通｜6-7=基本配合｜4-5=較少主動｜1-3=協作困難'},
+  {id:'efficiency',name:'工作效能與自主能力',w:0.3,label:'30%',hint:'10=高效協助｜8-9=完成自身並支援｜6-7=自身可完成｜4-5=需提醒才完成｜1-3=進度落後'},
+  {id:'quality',   name:'成果品質',          w:0.3,label:'30%',hint:'10=精準超越客需｜8-9=符合需求｜6-7=基本達標｜4-5=常需修改｜1-3=品質低落'},
+];
+
+var STORE_KEY = 'eval_data_v1';
+var STORE_META = 'eval_meta_v1';
+var data = {};
+var selM = MEMBERS[0].id;
+var selR = ROLES[0];
+
+function initData(){
+  MEMBERS.forEach(function(m){
+    data[m.id]={selfSubmitted:false,comment:''};
+    ROLES.forEach(function(r){
+      data[m.id][r]={};
+      SECS.forEach(function(s){data[m.id][r][s.id]={r1:'',r2:'',r3:'',self:''};});
+    });
+  });
+}
+
+// ── localStorage 儲存 ──────────────────────────────────────
+function saveData(){
+  try{localStorage.setItem(STORE_KEY, JSON.stringify(data));}catch(e){}
+  showToast();
+}
+function loadData(){
+  try{
+    var raw=localStorage.getItem(STORE_KEY);
+    if(!raw) return;
+    var saved=JSON.parse(raw);
+    MEMBERS.forEach(function(m){
+      if(saved[m.id]){
+        data[m.id].selfSubmitted=saved[m.id].selfSubmitted||false;
+        data[m.id].comment=saved[m.id].comment||'';
+        ROLES.forEach(function(r){
+          if(saved[m.id][r]){
+            SECS.forEach(function(s){
+              if(saved[m.id][r][s.id]){
+                data[m.id][r][s.id]=saved[m.id][r][s.id];
+              }
+            });
+          }
+        });
+      }
+    });
+  }catch(e){}
+}
+function saveMeta(){
+  try{localStorage.setItem(STORE_META, JSON.stringify({
+    month: document.getElementById('eval-month').value,
+    reviewer: document.getElementById('reviewer-name').value
+  }));}catch(e){}
+}
+function loadMeta(){
+  try{
+    var raw=localStorage.getItem(STORE_META);
+    if(!raw) return;
+    var m=JSON.parse(raw);
+    if(m.month) document.getElementById('eval-month').value=m.month;
+    if(m.reviewer) document.getElementById('reviewer-name').value=m.reviewer;
+  }catch(e){}
+}
+
+var toastTimer;
+function showToast(){
+  var t=document.getElementById('save-toast');
+  t.className='save-toast show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(function(){t.className='save-toast';},1800);
+}
+
+// ── 計算 ──────────────────────────────────────────────────
+function grade(v){
+  if(v===null)return null;
+  if(v>8.999)return'S';
+  if(v>7.999)return'A';
+  if(v>5.999)return'B';
+  return'C';
+}
+function gb(v){var g=grade(v);return g?'<span class="gb g'+g+'">'+g+'</span>':'';}
+function isNL(mid,role){
+  return SECS.every(function(s){var v=data[mid][role][s.id].self;return v===''||parseFloat(v)===0;})
+    && SECS.some(function(s){var v=data[mid][role][s.id].self;return v==='0'||v===0;});
+}
+function hasSelf(mid,role){return SECS.some(function(s){return data[mid][role][s.id].self!=='';});}
+function secAvg(mid,role,sid){
+  var d=data[mid][role][sid];
+  var vals=[d.r1,d.r2,d.r3,d.self].filter(function(v){return v!=='';}).map(Number);
+  return vals.length?vals.reduce(function(a,b){return a+b;})/vals.length:null;
+}
+function roleW(mid,role){
+  if(isNL(mid,role))return null;
+  var s=0,w=0;
+  SECS.forEach(function(sec){var a=secAvg(mid,role,sec.id);if(a!==null){s+=a*sec.w;w+=sec.w;}});
+  return w>0?s/w*(0.4+0.3+0.3):null;
+}
+function overall(mid){
+  var sc=ROLES.map(function(r){return roleW(mid,r);}).filter(function(v){return v!==null;});
+  return sc.length?sc.reduce(function(a,b){return a+b;})/sc.length:null;
+}
+function learnedN(mid){return ROLES.filter(function(r){return !isNL(mid,r)&&hasSelf(mid,r);}).length;}
+
+// ── 人員卡片 ──────────────────────────────────────────────
+function buildGrid(){
+  var html='';
+  MEMBERS.forEach(function(m){
+    var ov=overall(m.id);var lc=learnedN(m.id);
+    html+='<div class="pcard'+(selM===m.id?' active':'')+'" onclick="selP(\''+m.id+'\')">'
+      +(data[m.id].selfSubmitted?'<div class="pc-dot"></div>':'')
+      +'<div class="pc-name">'+m.name+'</div>'
+      +'<div class="pc-sub">'+m.title+' · '+(lc?lc+'/9':'未填')+'</div>'
+      +'<div class="pc-score">'+(ov!==null?ov.toFixed(2):'—')+(ov!==null?gb(ov):'')+'</div>'
+      +'</div>';
+  });
+  document.getElementById('pgrid').innerHTML=html;
+}
+
+// ── 評分面板 ──────────────────────────────────────────────
+function buildPanel(){
+  var m=MEMBERS.filter(function(x){return x.id===selM;})[0];
+  var ov=overall(m.id);var lc=learnedN(m.id);
+  var nl=isNL(m.id,selR);
+
+  var tabs='';
+  ROLES.forEach(function(r){
+    var rnl=isNL(m.id,r);var rhs=hasSelf(m.id,r);var rw=roleW(m.id,r);
+    var cls='rtab';
+    if(r===selR)cls+=' active';
+    if(rhs&&!rnl)cls+=' has-self';
+    if(rnl)cls+=' not-learned';
+    var hint=rnl?'<span style="font-size:9px;opacity:.6"> 未學</span>':rw!==null?'<span style="font-size:9px;opacity:.7"> '+rw.toFixed(1)+'</span>':'';
+    tabs+='<button class="'+cls+'" onclick="selR=\''+r+'\';buildPanel()">'+r+hint+'</button>';
+  });
+
+  var secHTML='';
+  if(nl){
+    secHTML='<div class="not-learned-box">夥伴自評為 0，此崗位<strong>尚未學習</strong>，不計入整體分數<br><span style="font-size:12px">如需修正請在自評欄輸入分數</span></div>';
+  }
+  SECS.forEach(function(s){
+    var sd=data[m.id][selR][s.id];
+    var a=secAvg(m.id,selR,s.id);var g=grade(a);
+    var sc=sd.self==='0'||sd.self===0?' zero':sd.self!==''?' self-in':'';
+    var badge=sd.self!==''&&parseFloat(sd.self)===0
+      ?'<span class="sbadge sbadge-zero">自評0</span>'
+      :sd.self!==''?'<span class="sbadge sbadge-self">已自評</span>':'';
+    secHTML+='<div class="sec-block"'+(nl?' style="opacity:.5"':'')+'>'
+      +'<div class="sec-head"><span class="sec-title">'+s.name+'</span><span class="sec-w">'+s.label+'</span>'+badge+'</div>'
+      +'<div class="criteria">'+s.hint+'</div>'
+      +'<div class="score-row hdr"><span style="text-align:center">考官1</span><span style="text-align:center">考官2</span><span style="text-align:center">考官3</span><span style="text-align:center">自評</span><span style="text-align:center">平均</span><span style="text-align:center">級</span></div>'
+      +'<div class="score-row">'
+      +'<input class="si" type="number" min="0" max="10" step="0.5" value="'+sd.r1+'" placeholder="—" oninput="setS(\''+m.id+'\',\''+selR+'\',\''+s.id+'\',\'r1\',this.value)"/>'
+      +'<input class="si" type="number" min="0" max="10" step="0.5" value="'+sd.r2+'" placeholder="—" oninput="setS(\''+m.id+'\',\''+selR+'\',\''+s.id+'\',\'r2\',this.value)"/>'
+      +'<input class="si" type="number" min="0" max="10" step="0.5" value="'+sd.r3+'" placeholder="—" oninput="setS(\''+m.id+'\',\''+selR+'\',\''+s.id+'\',\'r3\',this.value)"/>'
+      +'<input class="si'+sc+'" type="number" min="0" max="10" step="0.5" value="'+sd.self+'" placeholder="—" oninput="setS(\''+m.id+'\',\''+selR+'\',\''+s.id+'\',\'self\',this.value)"/>'
+      +'<div class="avg-d">'+(a!==null?a.toFixed(1):'—')+'</div>'
+      +'<div class="grade-d">'+(a!==null?'<span class="gb g'+g+'">'+g+'</span>':'')+'</div>'
+      +'</div></div>';
+  });
+
+  document.getElementById('eval-panel').innerHTML=
+    '<div class="panel">'
+    +'<div class="panel-name">'+m.name+' <span style="font-size:13px;color:#888;font-weight:400">'+m.title+'</span>'+(data[m.id].selfSubmitted?'<span class="sbadge sbadge-self" style="margin-left:6px">已收自評</span>':'')+'</div>'
+    +'<div class="panel-sub">整體：<strong>'+(ov!==null?ov.toFixed(2):'—')+'</strong>'+(ov!==null?gb(ov):'')+'　已學習 <strong>'+lc+'</strong>/9 崗</div>'
+    +'<div class="role-tabs">'+tabs+'</div>'
+    +'<div class="reviewer-hint">考官參考：'+(RR[selR]||'')+'</div>'
+    +secHTML
+    +'<div style="margin-top:14px;padding-top:14px;border-top:0.5px solid #F0EEE8;">'
+    +'<label style="font-size:12px;color:#888;display:block;margin-bottom:4px">主管備註 / 目標共識</label>'
+    +'<textarea class="tarea" oninput="data[\''+m.id+'\'].comment=this.value;saveData()" placeholder="整體備註或下月目標…">'+data[m.id].comment+'</textarea>'
+    +'</div></div>';
+}
+
+function selP(id){selM=id;buildGrid();buildPanel();}
+function setS(mid,role,sid,f,v){data[mid][role][sid][f]=v;saveData();buildGrid();buildPanel();}
+
+// ── 總覽 ──────────────────────────────────────────────────
+function buildSummary(){
+  var rh=ROLES.map(function(r){return '<th>'+r+'</th>';}).join('');
+  var html='<thead><tr><th class="left">姓名</th><th class="left">職稱</th>'+rh+'</tr></thead><tbody>';
+  MEMBERS.forEach(function(m){
+    var cells=ROLES.map(function(r){
+      var nl=isNL(m.id,r);var rw=roleW(m.id,r);
+      if(nl)return'<td style="color:#C8C5BE">—</td>';
+      if(rw===null)return'<td style="color:#DDD">·</td>';
+      var g=grade(rw);
+      return'<td><div class="score-cell"><span style="font-size:13px;font-weight:600">'+rw.toFixed(1)+'</span><span class="gb g'+g+'" style="font-size:9px">'+g+'</span></div></td>';
+    }).join('');
+    html+='<tr>'
+      +'<td class="left">'+m.name+(data[m.id].selfSubmitted?'<span class="sbadge sbadge-self" style="margin-left:4px">自評</span>':'')+'</td>'
+      +'<td class="left" style="color:#888">'+m.title+'</td>'
+      +cells+'</tr>';
+  });
+  document.getElementById('sum-tbl').innerHTML=html+'</tbody>';
+}
+
+function switchTab(v){
+  document.querySelectorAll('.tab').forEach(function(t,i){
+    t.className='tab'+((['eval','summary'][i]===v)?' active':'');
+  });
+  document.querySelectorAll('.view').forEach(function(el){el.className='view';});
+  document.getElementById('view-'+v).className='view active';
+  if(v==='summary')buildSummary();
+}
+
+// ── 匯入 ──────────────────────────────────────────────────
+function openImport(){document.getElementById('modal-import').style.display='';}
+function closeImport(){document.getElementById('modal-import').style.display='none';document.getElementById('import-input').value='';document.getElementById('import-msg').textContent='';}
+function doImport(){
+  var raw=document.getElementById('import-input').value.trim();
+  var msg=document.getElementById('import-msg');
+  if(!raw.startsWith('SELF2:')){msg.style.color='#A32D2D';msg.textContent='格式錯誤，請確認是否完整。';return;}
+  try{
+    var p=JSON.parse(decodeURIComponent(escape(atob(raw.slice(6)))));
+    var m=MEMBERS.filter(function(x){return x.name===p.name;})[0];
+    if(!m){msg.style.color='#A32D2D';msg.textContent='找不到「'+p.name+'」';return;}
+    ROLES.forEach(function(r){
+      if(p.scores&&p.scores[r]){
+        SECS.forEach(function(s){if(p.scores[r][s.id]!==undefined)data[m.id][r][s.id].self=p.scores[r][s.id];});
+      }
+    });
+    data[m.id].selfSubmitted=true;
+    saveData();selM=m.id;buildGrid();buildPanel();closeImport();
+  }catch(e){msg.style.color='#A32D2D';msg.textContent='解碼失敗，代碼可能不完整。';}
+}
+
+// ── 重置 ──────────────────────────────────────────────────
+function resetAll(){
+  initData();
+  try{localStorage.removeItem(STORE_KEY);}catch(e){}
+  buildGrid();buildPanel();
+}
+
+// ── CSV ───────────────────────────────────────────────────
+function exportCSV(){
+  var month=document.getElementById('eval-month').value||'未填';
+  var op=document.getElementById('reviewer-name').value||'未填';
+  var bom='\uFEFF';
+  var headers=['姓名','職稱'];
+  ROLES.forEach(function(r){SECS.forEach(function(s){
+    headers.push(r+'-'+s.name+'-考官1',r+'-'+s.name+'-考官2',r+'-'+s.name+'-考官3',r+'-'+s.name+'-自評',r+'-'+s.name+'-平均');
+  });});
+  ROLES.forEach(function(r){headers.push(r+'-加權分',r+'-評級');});
+  headers.push('主管備註');
+  var rows=[['考核月份',month],['考核人',op],[],headers];
+  MEMBERS.forEach(function(m){
+    var row=[m.name,m.title];
+    ROLES.forEach(function(r){SECS.forEach(function(s){
+      var d=data[m.id][r][s.id];var a=secAvg(m.id,r,s.id);
+      row.push(d.r1,d.r2,d.r3,d.self,a!==null?a.toFixed(2):'');
+    });});
+    ROLES.forEach(function(r){
+      var rw=roleW(m.id,r);var nl=isNL(m.id,r);
+      row.push(nl?'未學習':rw!==null?rw.toFixed(2):'');
+      row.push(nl?'—':grade(rw)||'');
+    });
+    row.push(data[m.id].comment);
+    rows.push(row);
+  });
+  var csv=bom+rows.map(function(r){return r.map(function(c){return'"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));
+  a.download='內場考評_'+month+'.csv';a.click();
+}
+
+// ── 初始化 ────────────────────────────────────────────────
+initData();
+loadData();
+var now=new Date();
+var defMonth=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
+document.getElementById('eval-month').value=defMonth;
+loadMeta();
+buildGrid();
+buildPanel();
+</script>
+</body>
+</html>
