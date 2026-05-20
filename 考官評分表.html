@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>考官評分表</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Helvetica Neue',sans-serif;background:#F5F5F3;color:#1a1a1a;padding-bottom:60px;}
+.header{background:#fff;border-bottom:0.5px solid #E0DED8;padding:16px 20px;position:sticky;top:0;z-index:10;}
+.header h1{font-size:17px;font-weight:600;}
+.header p{font-size:12px;color:#888;margin-top:3px;}
+.container{padding:16px;}
+.notice{background:#E6F1FB;border:0.5px solid #B5D4F4;border-radius:10px;padding:12px 14px;font-size:13px;color:#185FA5;line-height:1.7;margin-bottom:16px;}
+.card{background:#fff;border-radius:12px;padding:16px;margin-bottom:12px;border:0.5px solid #E8E6E0;}
+.card-title{font-size:15px;font-weight:600;margin-bottom:4px;}
+.card-sub{font-size:12px;color:#888;margin-bottom:12px;}
+select{width:100%;padding:11px 12px;border-radius:8px;border:0.5px solid #D8D6D0;font-size:15px;background:#FAFAF8;color:#1a1a1a;}
+select:focus{outline:none;border-color:#1a1a1a;}
+.member-card{background:#fff;border-radius:12px;margin-bottom:10px;border:0.5px solid #E8E6E0;overflow:hidden;}
+.member-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;background:#F8F7F5;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.member-name{font-size:15px;font-weight:500;}
+.member-role{font-size:12px;color:#888;margin-top:2px;}
+.m-status{font-size:12px;padding:3px 10px;border-radius:20px;font-weight:500;}
+.s-empty{background:#EDECE8;color:#888;}
+.s-done{background:#EAF3DE;color:#3B6D11;}
+.member-body{padding:14px;display:none;}
+.sec-block{margin-bottom:14px;padding-bottom:14px;border-bottom:0.5px solid #F5F3EF;}
+.sec-block:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.sec-label{font-size:13px;font-weight:500;color:#333;margin-bottom:3px;}
+.sec-weight{font-size:11px;color:#aaa;margin-left:4px;}
+.criteria{font-size:11px;color:#AAA;background:#F8F7F5;padding:7px 10px;border-radius:7px;line-height:1.7;margin-bottom:7px;}
+.score-inp{width:100%;padding:12px;text-align:center;font-size:20px;font-weight:600;border-radius:8px;border:0.5px solid #D8D6D0;background:#FAFAF8;color:#1a1a1a;-webkit-appearance:none;}
+.score-inp:focus{outline:none;border-color:#1a1a1a;background:#fff;}
+.gen-btn{width:100%;padding:16px;background:#1a1a1a;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;margin-top:4px;-webkit-tap-highlight-color:transparent;}
+.gen-btn:active{opacity:0.75;}
+.result-card{background:#fff;border-radius:12px;padding:16px;margin-top:14px;border:0.5px solid #9FE1CB;display:none;}
+.result-title{font-size:15px;font-weight:600;color:#3B6D11;margin-bottom:4px;}
+.result-sub{font-size:12px;color:#888;margin-bottom:10px;line-height:1.6;}
+.code-area{width:100%;padding:12px;border-radius:8px;border:0.5px solid #E8E6E0;font-size:11px;font-family:monospace;background:#F5F5F3;min-height:72px;word-break:break-all;resize:none;color:#333;}
+.copy-btn{width:100%;padding:14px;background:#EAF3DE;color:#3B6D11;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;margin-top:10px;-webkit-tap-highlight-color:transparent;}
+.copy-btn:active{background:#C0DD97;}
+.copy-ok{text-align:center;font-size:13px;color:#3B6D11;margin-top:8px;font-weight:500;min-height:20px;}
+.tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:middle;}
+.tag-role{background:#F1EFE8;color:#5F5E5A;}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>考官評分表</h1>
+  <p id="hdr-month"></p>
+</div>
+
+<div class="container">
+  <div class="notice">
+    📝 <strong>考官填寫說明</strong><br>
+    · 選擇你的名字，系統會自動列出你負責評分的夥伴與崗位<br>
+    · 依照每位夥伴的實際表現填入 1–10 分<br>
+    · 全部填完後點「產生評分碼」，用 LINE 傳給主管
+  </div>
+
+  <div class="card">
+    <div class="card-title">我是考官</div>
+    <div class="card-sub">請選擇你的名字</div>
+    <select id="sel-reviewer" onchange="onReviewerChange()">
+      <option value="">— 請選擇 —</option>
+      <option>王大銘</option><option>鄭洪</option><option>陳佩玟</option>
+      <option>謝忠翰</option><option>郭嘉翔</option><option>李雨璇</option>
+      <option>朱尉廷</option><option>謝宇璇</option><option>溫偉成</option>
+    </select>
+  </div>
+
+  <div id="members-wrap"></div>
+
+  <button class="gen-btn" onclick="generate()">產生評分碼</button>
+
+  <div class="result-card" id="result-card">
+    <div class="result-title">✅ 評分碼已產生</div>
+    <div class="result-sub">長按全選複製，或點下方「複製」按鈕，再用 LINE 傳給主管</div>
+    <textarea class="code-area" id="code-out" readonly></textarea>
+    <button class="copy-btn" onclick="doCopy()">複製評分碼</button>
+    <div class="copy-ok" id="copy-ok"></div>
+  </div>
+</div>
+
+<script>
+// 所有夥伴
+var MEMBERS=[
+  {id:'wdm',name:'王大銘',title:'店長'},
+  {id:'zh', name:'鄭洪',  title:'主廚'},
+  {id:'cpw',name:'陳佩玟',title:'副廚'},
+  {id:'xzh',name:'謝忠翰',title:'組長'},
+  {id:'gjx',name:'郭嘉翔',title:'組長'},
+  {id:'lyx',name:'李雨璇',title:'值班'},
+  {id:'lce',name:'李承恩',title:'值班'},
+  {id:'zwt',name:'朱尉廷',title:'值班'},
+  {id:'xyx',name:'謝宇璇',title:'值班'},
+  {id:'wwc',name:'溫偉成',title:'工讀'},
+  {id:'gzm',name:'郭兆銘',title:'工讀'},
+  {id:'qjy',name:'邱畯育',title:'工讀'},
+  {id:'yxy',name:'楊憲宇',title:'工讀'},
+  {id:'gwy',name:'郭維育',title:'工讀'},
+];
+
+var ROLES=['主爐','副爐','肉台','烤炸','擺控','甜點','備料','開早','收班'];
+
+// 每個崗位對應的3位考官（順序對應 r1, r2, r3）
+var ROLE_REVIEWERS={
+  '主爐':['王大銘','郭嘉翔','謝忠翰'],
+  '副爐':['朱尉廷','郭嘉翔','謝忠翰'],
+  '肉台':['王大銘','郭嘉翔','陳佩玟'],
+  '烤炸':['王大銘','郭嘉翔','陳佩玟'],
+  '擺控':['鄭洪','李雨璇','溫偉成'],
+  '甜點':['李雨璇','謝宇璇','溫偉成'],
+  '備料':['鄭洪','李雨璇','陳佩玟'],
+  '開早':['鄭洪','郭嘉翔','陳佩玟'],
+  '收班':['鄭洪','郭嘉翔','陳佩玟'],
+};
+
+var SECS=[
+  {id:'collab',    name:'協作與溝通',       w:'40%',hint:'10=全力協作 / 7-9=良好溝通 / 4-6=基本配合 / 1-3=協作困難'},
+  {id:'efficiency',name:'工作效能與自主能力',w:'30%',hint:'10=高效協助 / 7-9=完成自身並支援 / 4-6=自身可完成 / 1-3=進度落後'},
+  {id:'quality',   name:'成果品質',          w:'30%',hint:'10=精準超越客需 / 7-9=符合需求 / 4-6=基本達標 / 1-3=品質低落'},
+];
+
+var now=new Date();
+var MONTH=now.getFullYear()+'-'+('0'+(now.getMonth()+1)).slice(-2);
+document.getElementById('hdr-month').textContent=MONTH+' 考官評分表';
+
+// 取得某考官需要評哪些夥伴＋崗位＋是第幾位考官
+function getAssignments(reviewerName){
+  var result=[];
+  MEMBERS.forEach(function(m){
+    ROLES.forEach(function(role){
+      var rlist=ROLE_REVIEWERS[role];
+      if(!rlist)return;
+      var idx=rlist.indexOf(reviewerName);
+      if(idx===-1)return;
+      // idx 0→r1, 1→r2, 2→r3
+      result.push({member:m, role:role, field:'r'+(idx+1)});
+    });
+  });
+  return result;
+}
+
+// 把 assignments 按夥伴分組
+function groupByMember(assignments){
+  var map={};
+  var order=[];
+  assignments.forEach(function(a){
+    if(!map[a.member.id]){
+      map[a.member.id]={member:a.member, roles:[]};
+      order.push(a.member.id);
+    }
+    map[a.member.id].roles.push({role:a.role, field:a.field});
+  });
+  return order.map(function(id){return map[id];});
+}
+
+var currentAssignments=[];
+
+function onReviewerChange(){
+  var name=document.getElementById('sel-reviewer').value;
+  document.getElementById('result-card').style.display='none';
+  document.getElementById('copy-ok').textContent='';
+  if(!name){document.getElementById('members-wrap').innerHTML='';return;}
+  currentAssignments=getAssignments(name);
+  buildMemberList(currentAssignments);
+}
+
+function buildMemberList(assignments){
+  var groups=groupByMember(assignments);
+  if(!groups.length){
+    document.getElementById('members-wrap').innerHTML='<div style="text-align:center;color:#888;padding:20px;font-size:13px;">此月份你沒有負責評分的夥伴</div>';
+    return;
+  }
+  var html='';
+  groups.forEach(function(g){
+    var mid=g.member.id;
+    var mname=g.member.name;
+    var mtitle=g.member.title;
+    var rolesHTML='';
+    g.roles.forEach(function(ri){
+      var secHTML='';
+      SECS.forEach(function(s){
+        secHTML+='<div class="sec-block">'
+          +'<div class="sec-label">'+s.name+' <span class="sec-weight">'+s.w+'</span></div>'
+          +'<div class="criteria">'+s.hint+'</div>'
+          +'<input class="score-inp" type="number" inputmode="decimal" min="1" max="10" step="0.5"'
+          +' id="sc-'+mid+'-'+ri.role+'-'+s.id+'"'
+          +' placeholder="填入 1–10 分"'
+          +' oninput="refreshMStatus(\''+mid+'\')">'
+          +'</div>';
+      });
+      rolesHTML+='<div style="margin-bottom:14px;padding-bottom:14px;border-bottom:0.5px solid #F0EEE8;">'
+        +'<div style="font-size:13px;font-weight:600;margin-bottom:10px;color:#185FA5;">'+ri.role+'<span class="tag tag-role">'+ri.field.replace('r','考官')+'</span></div>'
+        +secHTML
+        +'</div>';
+    });
+    html+='<div class="member-card">'
+      +'<div class="member-header" onclick="toggleMember(\''+mid+'\')">'
+      +'<div><div class="member-name">'+mname+'</div><div class="member-role">'+mtitle+' · 評 '+g.roles.map(function(r){return r.role;}).join('、')+'</div></div>'
+      +'<span class="m-status s-empty" id="mst-'+mid+'">未填</span>'
+      +'</div>'
+      +'<div class="member-body" id="mbody-'+mid+'">'
+      +rolesHTML
+      +'</div></div>';
+  });
+  document.getElementById('members-wrap').innerHTML=html;
+}
+
+function toggleMember(mid){
+  var b=document.getElementById('mbody-'+mid);
+  b.style.display=b.style.display==='block'?'none':'block';
+}
+
+function refreshMStatus(mid){
+  var name=document.getElementById('sel-reviewer').value;
+  var assignments=currentAssignments.filter(function(a){return a.member.id===mid;});
+  var allFilled=assignments.every(function(a){
+    return SECS.every(function(s){
+      var el=document.getElementById('sc-'+mid+'-'+a.role+'-'+s.id);
+      return el&&el.value!=='';
+    });
+  });
+  var st=document.getElementById('mst-'+mid);
+  if(st){
+    st.textContent=allFilled?'已填 ✓':'未填';
+    st.className='m-status '+(allFilled?'s-done':'s-empty');
+  }
+}
+
+function generate(){
+  var name=document.getElementById('sel-reviewer').value;
+  if(!name){alert('請先選擇你的名字');return;}
+  if(!currentAssignments.length){alert('沒有需要評分的夥伴');return;}
+
+  var missing=[];
+  var scores={};
+
+  currentAssignments.forEach(function(a){
+    var mid=a.member.id;
+    var mname=a.member.name;
+    if(!scores[mname])scores[mname]={};
+    if(!scores[mname][a.role])scores[mname][a.role]={};
+    SECS.forEach(function(s){
+      var el=document.getElementById('sc-'+mid+'-'+a.role+'-'+s.id);
+      var v=el?el.value:'';
+      if(v==='')missing.push(mname+'/'+a.role);
+      scores[mname][a.role][s.id]=v;
+    });
+  });
+
+  // 去重
+  var uniq=[];
+  missing.forEach(function(x){if(uniq.indexOf(x)===-1)uniq.push(x);});
+  if(uniq.length){
+    alert('以下尚未填完：\n'+uniq.join('\n'));
+    return;
+  }
+
+  var payload=JSON.stringify({v:1,type:'reviewer',month:MONTH,reviewer:name,scores:scores});
+  var code='REV1:'+btoa(unescape(encodeURIComponent(payload)));
+  document.getElementById('code-out').value=code;
+  document.getElementById('result-card').style.display='block';
+  document.getElementById('copy-ok').textContent='';
+  setTimeout(function(){document.getElementById('result-card').scrollIntoView({behavior:'smooth'});},100);
+}
+
+function doCopy(){
+  var t=document.getElementById('code-out').value;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(function(){
+      document.getElementById('copy-ok').textContent='已複製！用 LINE 傳給主管 ✓';
+    });
+  }else{
+    var ta=document.getElementById('code-out');
+    ta.select();ta.setSelectionRange(0,99999);
+    document.execCommand('copy');
+    document.getElementById('copy-ok').textContent='已複製！用 LINE 傳給主管 ✓';
+  }
+}
+</script>
+</body>
+</html>
